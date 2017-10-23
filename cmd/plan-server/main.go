@@ -77,7 +77,8 @@ func main() {
 
 	}
 
-	log.Info().Msg("Starting database")
+	log.Info().Msgf("Plan v%s (api: v%s)", plan.SERVER_VERSION, plan.API_VERSION)
+
 	db, err := plan.NewBoltPlanDB(dbdir)
 
 	if err != nil {
