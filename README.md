@@ -26,5 +26,5 @@ specified <password>.  For example:
 | **/now** | GET | Retrieves the lastest posted plan |
 | **/now** | POST | Posts a new plan; this can be the plan body, links, tags, or any combination of the three |
 | **/all** | GET | Retrieves all posted plans, in order of descending timeline |
-| **/plan/<ID>** | GET | Retrieves a posted plan by ID |
+| **/plan/ID** | GET | Retrieves a posted plan by ID |
 | **/info** | POST | Posts an update to the planner's information |
