@@ -33,8 +33,8 @@ func (ws *WebService) Start(port int, authString string) {
 	ws.authString = authString
 	http.HandleFunc("/now", ws.current)
 	http.HandleFunc("/info", ws.info)
-	http.HandleFunc("/plan/", ws.plan)
-	http.HandleFunc("/plans", ws.plans)
+	http.HandleFunc("/id/", ws.plan)
+	http.HandleFunc("/all", ws.plans)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
 
