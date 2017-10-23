@@ -25,8 +25,13 @@ func main() {
 	flag.Parse()
 
 	if dbdir == "" {
-		fmt.Println("You must specify a -dir paramter with the directory to put the plan database in.")
-		return
+		homedir := os.Getenv("HOME")
+
+		dbdir = homedir + "/.plan"
+
+		if _, err := os.Stat(dbdir); os.IsNotExist(err) {
+			os.Mkdir(dbdir, 0700)
+		}
 	}
 
 	if password == "" {
@@ -54,10 +59,20 @@ func main() {
 		location, _ := reader.ReadString('\n')
 		location = strings.TrimSpace(location)
 
+		fmt.Printf("What's your website URL? ")
+		website, _ := reader.ReadString('\n')
+		website = strings.TrimSpace(website)
+
+		fmt.Printf("What's your avatar URL? ")
+		avatar, _ := reader.ReadString('\n')
+		avatar = strings.TrimSpace(avatar)
+
 		info = &plan.PlanInfo{
-			Handle:   handle,
-			RealName: realName,
-			Location: location,
+			Handle:    handle,
+			RealName:  realName,
+			Location:  location,
+			Homepage:  website,
+			AvatarURL: avatar,
 		}
 
 	}

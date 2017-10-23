@@ -86,6 +86,9 @@ func (b *BoltPlanDB) NewPlan(p *Plan) (*Plan, error) {
 	if p.Tags == nil {
 		p.Tags = []string{}
 	}
+	if p.Location == nil {
+		p.Location = &GeoLocation{}
+	}
 	p.PostedTime = int64(time.Duration(time.Now().UnixNano()) / time.Millisecond)
 	plan, err := b.SavePlan(p)
 

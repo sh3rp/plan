@@ -14,9 +14,11 @@ type WebService struct {
 }
 
 type Response struct {
-	Code      int    `json:"code"`
-	Message   string `json:"message"`
-	Timestamp int64  `json:"timestamp"`
+	Code      int       `json:"code"`
+	Message   string    `json:"message"`
+	Timestamp int64     `json:"timestamp"`
+	Version   *Version  `json:"version"`
+	Info      *PlanInfo `json:"info"`
 }
 
 type PlanResponse struct {
@@ -32,7 +34,6 @@ type PlanInfoResponse struct {
 func (ws *WebService) Start(port int, authString string) {
 	ws.authString = authString
 	http.HandleFunc("/now", ws.current)
-	http.HandleFunc("/info", ws.info)
 	http.HandleFunc("/id/", ws.plan)
 	http.HandleFunc("/all", ws.plans)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
@@ -51,8 +52,6 @@ func (ws *WebService) current(w http.ResponseWriter, r *http.Request) {
 
 func (ws *WebService) info(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
-	case "GET":
-		ws.currentInfo(w, r)
 	case "POST":
 		fallthrough
 	case "PUT":
@@ -67,9 +66,9 @@ func (ws *WebService) plan(w http.ResponseWriter, r *http.Request) {
 	plan, err := ws.PlanDB.GetPlan(id)
 
 	if err != nil {
-		sendError(w, 101, "Error retrieving plan")
+		ws.sendError(w, 101, "Error retrieving plan")
 	} else {
-		sendPlan(w, plan)
+		ws.sendPlan(w, plan)
 	}
 }
 
@@ -77,9 +76,9 @@ func (ws *WebService) plans(w http.ResponseWriter, r *http.Request) {
 	plans, err := ws.PlanDB.GetPlans()
 
 	if err != nil {
-		sendError(w, 101, "Error retrieving plans")
+		ws.sendError(w, 101, "Error retrieving plans")
 	} else {
-		sendPlans(w, plans)
+		ws.sendPlans(w, plans)
 	}
 }
 
@@ -87,56 +86,62 @@ func (ws *WebService) getCurrent(w http.ResponseWriter, r *http.Request) {
 	plan, err := ws.PlanDB.GetCurrentPlan()
 
 	if err != nil {
-		sendError(w, 101, "Error getting current plan")
+		ws.sendError(w, 101, "Error getting current plan")
 	} else {
-		sendPlan(w, plan)
+		ws.sendPlan(w, plan)
 	}
 }
 
 func (ws *WebService) postNew(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("x-plan-auth") != ws.authString {
-		sendError(w, 102, "Authentication error, wrong password")
+		ws.sendError(w, 102, "Authentication error, wrong password")
 		return
 	}
 	var plan Plan
 	err := json.NewDecoder(r.Body).Decode(&plan)
 	if err != nil {
-		sendError(w, 104, fmt.Sprintf("Error decoding plan object: %v", err))
+		ws.sendError(w, 104, fmt.Sprintf("Error decoding plan object: %v", err))
 		return
 	}
 	newPlan, err := ws.PlanDB.NewPlan(&plan)
 
 	if err != nil {
-		sendError(w, 105, "Error creating new plan")
+		ws.sendError(w, 105, "Error creating new plan")
 	} else {
-		sendPlan(w, newPlan)
+		ws.sendPlan(w, newPlan)
 	}
-}
-
-func (ws *WebService) currentInfo(w http.ResponseWriter, r *http.Request) {
-	info := ws.PlanDB.GetInfo()
-	sendPlanInfo(w, info)
 }
 
 func (ws *WebService) postInfo(w http.ResponseWriter, r *http.Request) {
 	var info PlanInfo
 	json.NewDecoder(r.Body).Decode(&info)
 	ws.PlanDB.SetInfo(&info)
-	sendPlanInfo(w, &info)
-}
-
-func sendError(w http.ResponseWriter, code int, msg string) {
 	json.NewEncoder(w).Encode(&PlanResponse{
 		Response: Response{
-			Code:      code,
-			Message:   msg,
+			Code:      1,
+			Message:   "Ok",
 			Timestamp: timestamp(),
+			Version:   VERSION,
+			Info:      ws.PlanDB.GetInfo(),
 		},
 		Plans: []*Plan{},
 	})
 }
 
-func sendPlan(w http.ResponseWriter, plan *Plan) {
+func (ws *WebService) sendError(w http.ResponseWriter, code int, msg string) {
+	json.NewEncoder(w).Encode(&PlanResponse{
+		Response: Response{
+			Code:      code,
+			Message:   msg,
+			Timestamp: timestamp(),
+			Version:   VERSION,
+			Info:      ws.PlanDB.GetInfo(),
+		},
+		Plans: []*Plan{},
+	})
+}
+
+func (ws *WebService) sendPlan(w http.ResponseWriter, plan *Plan) {
 	var plans []*Plan
 	if plan == nil {
 		plans = []*Plan{}
@@ -148,30 +153,23 @@ func sendPlan(w http.ResponseWriter, plan *Plan) {
 			Code:      1,
 			Message:   "Ok",
 			Timestamp: timestamp(),
+			Version:   VERSION,
+			Info:      ws.PlanDB.GetInfo(),
 		},
 		Plans: plans,
 	})
 }
 
-func sendPlans(w http.ResponseWriter, plans []*Plan) {
+func (ws *WebService) sendPlans(w http.ResponseWriter, plans []*Plan) {
 	json.NewEncoder(w).Encode(&PlanResponse{
 		Response: Response{
 			Code:      1,
 			Message:   "Ok",
 			Timestamp: timestamp(),
+			Version:   VERSION,
+			Info:      ws.PlanDB.GetInfo(),
 		},
 		Plans: plans,
-	})
-}
-
-func sendPlanInfo(w http.ResponseWriter, info *PlanInfo) {
-	json.NewEncoder(w).Encode(&PlanInfoResponse{
-		Response: Response{
-			Code:      1,
-			Message:   "Ok",
-			Timestamp: timestamp(),
-		},
-		PlanInfo: info,
 	})
 }
 
