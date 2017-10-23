@@ -35,7 +35,8 @@ To see the latest plan, run:
 
 ## JSON Data Format
 
-```{
+```
+{
     code: 1,
     message: "Ok",
     timestamp: 1508794546806,
