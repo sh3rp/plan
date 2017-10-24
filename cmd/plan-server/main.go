@@ -20,8 +20,7 @@ func main() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	flag.IntVar(&port, "port", 8080, "Port to run plan server on")
-	flag.StringVar(&dbdir, "dir", "", "Directory containings the plan database")
-	flag.StringVar(&password, "pass", "", "Password to authenticate new entry posting")
+	flag.StringVar(&dbdir, "dir", "", "Directory containing the plan data")
 	flag.Parse()
 
 	if dbdir == "" {
@@ -32,11 +31,6 @@ func main() {
 		if _, err := os.Stat(dbdir); os.IsNotExist(err) {
 			os.Mkdir(dbdir, 0700)
 		}
-	}
-
-	if password == "" {
-		fmt.Println("You must specify a -pass parameter that is the password used to add new plans.")
-		return
 	}
 
 	var info *plan.PlanInfo
@@ -75,6 +69,34 @@ func main() {
 			AvatarURL: avatar,
 		}
 
+		fmt.Printf("Enter password for posting: ")
+		pass, err := gopass.GetPasswd()
+
+		if err != nil {
+			fmt.Println("Error capturing password.")
+			os.Exit(1)
+		}
+
+		hasher := sha1.New()
+		hasher.Write(pass)
+		passwordBytes := hasher.Sum(nil)
+		password = string(passwordBytes)
+
+		err := ioutil.WriteFile(dbdir+"/passwd", passwordBytes, 0600)
+
+		if err != nil {
+			fmt.Printf("Error writing password to file: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	if password == "" {
+		passwordBytes, err := ioutil.ReadFile(dbdir + "/passwd")
+		if err != nil {
+			fmt.Printf("Error reading password: %v\n", err)
+			os.Exit(1)
+		}
+		password = string(passwordBytes)
 	}
 
 	log.Info().Msgf("Plan v%s (api: v%s)", plan.SERVER_VERSION, plan.API_VERSION)
