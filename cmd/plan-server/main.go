@@ -2,11 +2,15 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha1"
+	"encoding/hex"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 
+	"github.com/howeyc/gopass"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/sh3rp/plan"
@@ -80,9 +84,9 @@ func main() {
 		hasher := sha1.New()
 		hasher.Write(pass)
 		passwordBytes := hasher.Sum(nil)
-		password = string(passwordBytes)
+		password = hex.EncodeToString(passwordBytes)
 
-		err := ioutil.WriteFile(dbdir+"/passwd", passwordBytes, 0600)
+		err = ioutil.WriteFile(dbdir+"/passwd", passwordBytes, 0600)
 
 		if err != nil {
 			fmt.Printf("Error writing password to file: %v\n", err)
@@ -96,7 +100,7 @@ func main() {
 			fmt.Printf("Error reading password: %v\n", err)
 			os.Exit(1)
 		}
-		password = string(passwordBytes)
+		password = strings.TrimSpace(string(passwordBytes))
 	}
 
 	log.Info().Msgf("Plan v%s (api: v%s)", plan.SERVER_VERSION, plan.API_VERSION)

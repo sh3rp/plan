@@ -93,7 +93,7 @@ func (ws *WebService) getCurrent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ws *WebService) postNew(w http.ResponseWriter, r *http.Request) {
-	if !isAuthorized(r) {
+	if !ws.isAuthorized(r) {
 		ws.sendError(w, 102, "Authentication error, wrong password")
 		return
 	}
@@ -113,7 +113,7 @@ func (ws *WebService) postNew(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ws *WebService) postInfo(w http.ResponseWriter, r *http.Request) {
-	if !isAuthorized(r) {
+	if !ws.isAuthorized(r) {
 		ws.sendError(w, 102, "Authentication error, wrong password")
 		return
 	}
@@ -139,9 +139,7 @@ func (ws *WebService) sendError(w http.ResponseWriter, code int, msg string) {
 			Message:   msg,
 			Timestamp: timestamp(),
 			Version:   VERSION,
-			Info:      ws.PlanDB.GetInfo(),
 		},
-		Plans: []*Plan{},
 	})
 }
 
@@ -187,12 +185,9 @@ func (ws *WebService) isAuthorized(r *http.Request) bool {
 	if r.Header.Get(AUTH_HEADER) == "" {
 		return false
 	}
+	hash := r.Header.Get(AUTH_HEADER)
 
-	hasher := sha1.New()
-	hasher.Write(r.Header.Get(AUTH_HEADER))
-	hash := hasher.Sum(nil)
-
-	if ws.authString != string(hash) {
+	if ws.authString != hash {
 		return false
 	}
 
