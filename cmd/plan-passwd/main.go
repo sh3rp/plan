@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/howeyc/gopass"
@@ -19,5 +20,8 @@ func main() {
 	hasher := sha1.New()
 	hasher.Write(pass)
 	hash := hasher.Sum(nil)
-	fmt.Printf("Password = %s\n", hex.EncodeToString(hash))
+	passwordHash := hex.EncodeToString(hash)
+	fmt.Printf("%s\n", passwordHash)
+	homeDir := os.Getenv("HOME")
+	ioutil.WriteFile(homeDir+"/.plan/passwd", []byte(passwordHash), 0600)
 }

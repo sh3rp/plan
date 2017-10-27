@@ -86,7 +86,7 @@ func main() {
 		passwordBytes := hasher.Sum(nil)
 		password = hex.EncodeToString(passwordBytes)
 
-		err = ioutil.WriteFile(dbdir+"/passwd", passwordBytes, 0600)
+		err = ioutil.WriteFile(dbdir+"/passwd", []byte(password), 0600)
 
 		if err != nil {
 			fmt.Printf("Error writing password to file: %v\n", err)
