@@ -1,0 +1,8 @@
+bazel-bin
+bazel-out
+bazel-plan
+bazel-testlogs
+cmd/plan-passwd/BUILD.bazel
+cmd/plan-server/BUILD.bazel
+deps.bzl
+go.sum
